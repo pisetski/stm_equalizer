@@ -113,7 +113,6 @@ void MX_USB_HOST_Process(void);
 
 void  FFT(float *Rdat, float *Idat, int N, int LogN, int Ft_Flag)
 {
-	// parameters error check:
 	if ((Rdat == NULL) || (Idat == NULL))                  return;
 	if ((N > 16384) || (N < 1))                            return;
 	if (!NUMBER_IS_2_POW_K(N))                             return;
@@ -140,6 +139,13 @@ void  FFT(float *Rdat, float *Idat, int N, int LogN, int Ft_Flag)
 
 	nn = N >> 1;
 	ie = N;
+
+	for (int i = 0; i < N; i++) {
+		 if (i > 0 && ( (Rdat[i-1] > 0 && Rdat[i+1] > 0 && Rdat[i] < 0) || (Rdat[i-1] <0 && Rdat[i+1] <0 && Rdat[i] > 0 )) ) {
+			 Rdat[i] = Rdat[i] * (-1);
+		 }
+	}
+	if(N > LogN) return;
 	for (n = 1; n <= LogN; n++)
 	{
 		rw = Rcoef[LogN - n];
@@ -224,17 +230,16 @@ int getFileSize(FILE* inFile)
 
 void DrawAudioChart(uint8_t data[4096])
 {
-	 float value = 0;
+	float value = 0;
 
-	float Re[4096];
-	float Im[4096];
-
-	//waveformat->SampleRate * (waveformat->FileSize / waveformat->ByteRate)  - count = 4096
+	static float Re[4096];
+	static float Im[4096];
 
 	 for (int i = 0; i < 4096; i++)
 	 {
 		int16_t c = (data[i] << 8) | data[i + 1];
-		value = c * 30 / 32768; //for chart
+		value = c*60 / 32768; //for chart
+
 		Re[i] = value;
 		Im[i] = 0;
 
